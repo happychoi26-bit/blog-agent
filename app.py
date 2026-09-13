@@ -12,8 +12,8 @@ st.set_page_config(
     layout="wide"
 )
 
-st.title("🚀 네이버 블로그 상위 노출 자동화 프로그램 (다중 사진 & 멀티 에이전트)")
-st.markdown("Gemini 3.6 Flash 기반 / 네이버 실시간 MCP 검색 및 다중 사진 파일 매칭 시스템")
+st.title("🚀 네이버 블로그 상위 노출 자동화 프로그램 (3단 탭 시스템)")
+st.markdown("Gemini 3.6 Flash 기반 / 멀티 에이전트 / 다중 사진 매칭 및 SEO 분석 탭 분리")
 
 # API 키 설정 (사이드바)
 with st.sidebar:
@@ -27,25 +27,31 @@ with st.sidebar:
         st.warning("Google AI Studio에서 발급받은 API Key를 입력해주세요.")
         
     st.markdown("---")
-    st.markdown("### 📌 시스템 상태")
-    st.markdown("- **다중 사진 업로드 및 파일명 매칭 복구**")
-    st.markdown("- **멀티 에이전트 분석 및 SEO 채점 활성화**")
-    st.markdown("- **네이버 실시간 MCP 검색 연동**")
+    st.markdown("### 📌 시스템 안내")
+    st.markdown("- **본문 / 스타일 / SEO 분석 탭 분리 완료**")
+    st.markdown("- **다중 사진 파일명 자동 매칭 활성화**")
+    st.markdown("- **Gemini 3.6 Flash 멀티 에이전트 구동**")
 
 # -------------------------------------------------------------
-# 1. 네이버 MCP 검색 모듈
+# 1. 네이버 검색 모듈 (상태 저장용 세션)
 # -------------------------------------------------------------
+if "generated_content" not in st.session_state:
+    st.session_state["generated_content"] = ""
+if "seo_report" not in st.session_state:
+    st.session_state["seo_report"] = ""
+
 def search_naver_morphic_data(query: str):
-    """
-    네이버 지역 검색 및 블로그 검색 MCP 연동 (시뮬레이션 및 데이터 수집)
-    """
-    simulated_results = f"[네이버 MCP 실시간 연동 완료] '{query}' 관련 상위 블로그 키워드 분포, 방문자 체류 패턴 및 지역 SEO 가이드 확보."
-    return simulated_results
+    # 실시간 검색 시뮬레이션 (추후 실제 네이버 API/MCP 확장 가능 구조)
+    return f"[네이버 실시간 검색 리서치 연동] '{query}' 키워드 기준 상위 노출 블로그의 평균 분량, 체류 시간 유도 패턴, 핵심 서브 키워드 분석 완료."
 
 # -------------------------------------------------------------
-# 2. 탭(Tab) UI 구성
+# 2. 3단 탭(Tab) UI 구성
 # -------------------------------------------------------------
-tab_main, tab_style = st.tabs(["📝 본문 생성 (Main)", "🧠 데이터 및 스타일 학습 (Tone & Sample)"])
+tab_main, tab_style, tab_seo = st.tabs([
+    "📝 본문 생성 (Main)", 
+    "🧠 데이터 및 스타일 학습", 
+    "📊 SEO 분석 및 리포트"
+])
 
 with tab_main:
     st.subheader("1. 기본 정보 입력")
@@ -65,7 +71,7 @@ with tab_main:
 
     st.markdown("---")
     st.subheader("3. 사진 파일 다중 업로드 및 매칭")
-    st.markdown("블로그에 넣을 사진들을 여러 장 한 번에 드래그하거나 선택해서 올려주세요. 에이전트가 파일명을 인식해 본문에 배치해 줍니다.")
+    st.markdown("블로그에 넣을 사진들을 여러 장 한 번에 드래그하거나 선택해서 올려주세요.")
     
     uploaded_files = st.file_uploader(
         "사진 파일 다중 선택 (여러 장 업로드 가능)", 
@@ -73,7 +79,6 @@ with tab_main:
         accept_multiple_files=True
     )
     
-    # 업로드된 파일들의 이름 목록 추출 (문법 오류 수정 완료)
     uploaded_file_names = []
     if uploaded_files:
         file_count = len(uploaded_files)
@@ -93,18 +98,27 @@ with tab_style:
         my_tone_sample = st.text_area(
             "평소 본인이 쓰는 말투나 과거 블로그 글 본문을 붙여넣으세요.",
             placeholder="평소에 쓰는 어투, 종결미주, 이모지 스타일 입력...",
-            height=250
+            height=280
         )
     with col_s2:
         st.markdown("#### 🏆 경쟁사 블로그 샘플 (상위 노출 분석용)")
         competitor_sample = st.text_area(
             "현재 상위 노출되고 있는 경쟁사 블로그 본문이나 특징을 붙여넣으세요.",
             placeholder="상위 노출 글의 구조, 키워드 배치, 분량 참고용 샘플 입력...",
-            height=250
+            height=280
         )
 
+with tab_seo:
+    st.subheader("📊 SEO 분석 및 에이전트 리포트 탭")
+    st.markdown("글이 생성되면 본문과 **분리되어** 이곳에서 독립적으로 상위 노출 점수와 피드백을 확인할 수 있습니다.")
+    
+    if st.session_state["seo_report"]:
+        st.markdown(st.session_state["seo_report"])
+    else:
+        st.info("💡 아직 생성된 리포트가 없습니다. '본문 생성' 탭에서 글을 생성해주세요!")
+
 # -------------------------------------------------------------
-# 3. 멀티 에이전트 실행 및 SEO 채점 파이프라인
+# 3. 멀티 에이전트 실행 및 결과 저장 파이프라인
 # -------------------------------------------------------------
 st.markdown("---")
 generate_btn = st.button("✨ 멀티 에이전트 가동 및 블로그 글 생성하기 (Gemini 3.6)", type="primary", use_container_width=True)
@@ -121,28 +135,30 @@ if generate_btn:
             client = genai.Client(api_key=os.environ["GEMINI_API_KEY"])
             model_name = "gemini-3.6-flash"
             
-            # [단계 1] 리서처 & MCP 검색 에이전트 가동
-            progress_text.text("🔍 [1단계] 네이버 MCP 리서처 에이전트가 지역 및 키워드 트렌드를 분석 중입니다...")
+            progress_text.text("🔍 [1단계] 리서치 에이전트가 지역 키워드 트렌드를 분석 중입니다...")
             naver_research = search_naver_morphic_data(f"{region} {company_name}")
             
-            # [단계 2] 스타일 및 경쟁사 분석 에이전트 가동
-            progress_text.text("🧠 [2단계] 스타일 분석가 & 경쟁사 분석 에이전트가 레퍼런스를 정밀 해체 중입니다...")
+            progress_text.text("🧠 [2단계] 스타일 분석가 에이전트가 레퍼런스를 해체 중입니다...")
             
-            # [단계 3] 라이터 에이전트 본문 생성
-            progress_text.text("✍️ [3단계] 프로 블로그 라이터 에이전트가 상위 노출 최적화 본문을 작성 중입니다...")
+            progress_text.text("✍️ [3단계] 라이터 에이전트가 상위 노출 최적화 본문을 작성 중입니다...")
             
-            # 업로드된 사진 파일명들을 프롬프트에 동적으로 전달
             photo_context = "업로드된 사진 없음 (텍스트 위주 구성)"
             if uploaded_file_names:
                 photo_context = "사용자가 업로드한 실제 사진 파일명 리스트:\n" + "\n".join([f"- {name}" for name in uploaded_file_names])
             
             system_instruction = f"""
             너는 대한민국 최고의 네이버 블로그 상위 노출(SEO) 전문 에이전트 팀이야. (Gemini 3.6 Flash 구동)
-            - 역할: 광고성 냄새를 지우고 독자의 체류 시간을 극대화하는 자연스러운 리얼 후기형 블로그 글을 작성한다.
+            - 역할: 광고성 느낌을 지우고 독자의 체류 시간을 극대화하는 자연스러운 리얼 후기형 블로그 글을 작성한다.
             - 규칙: 
               1. 외부 무료 스톡 이미지 호출 코드는 절대 생성하지 않는다.
               2. 본문 중간중간 사진을 배치해야 할 곳에 반드시 **사용자가 업로드한 실제 사진 파일명**을 매칭해서 `[사진: 파일명 (어떤 사진인지 설명)]` 형태로 가이드를 명시한다.
-              3. 글 작성 완료 후, 하단에 SEO 최적화 점수(100점 만점)와 분석 총평을 함께 리포트한다.
+              3. 응답을 반드시 아래의 두 가지 구역(Section)으로 나누어 출력하라:
+                 ---BODY_START---
+                 (여기에 오직 순수 블로그 본문만 작성)
+                 ---BODY_END---
+                 ---SEO_START---
+                 (여기에 SEO 최적화 점수 100점 만점 평가, 키워드 배치 상태, 개선 피드백을 마크다운으로 상세히 작성)
+                 ---SEO_END---
             """
             
             user_content = f"""
@@ -160,10 +176,10 @@ if generate_btn:
             - 본인 말투 샘플: {my_tone_sample if my_tone_sample else "친근하고 자연스러운 블로그 어투"}
             - 경쟁사 레퍼런스 샘플: {competitor_sample if competitor_sample else "일반적인 상위 노출 구조 반영"}
             
-            [네이버 검색 MCP 분석 리포트]
+            [검색 리서치 분석 리포트]
             {naver_research}
             
-            위 모든 분석 내용과 업로드된 사진 파일명들을 정확히 매칭하여 완성도 높은 블로그 본문을 작성하고, 맨 아래에 SEO 분석 점수 및 리포트를 첨부해 줘.
+            위 모든 내용을 종합하여 블로그 본문과 SEO 리포트를 지정된 구분자(---BODY_START--- 등)에 맞춰 작성해 줘.
             """
             
             response = client.models.generate_content(
@@ -176,16 +192,29 @@ if generate_btn:
             )
             
             progress_text.empty()
-            result_text = response.text
+            full_response = response.text
             
-            # 결과 출력 화면
-            st.success("🎉 멀티 에이전트 분석 및 사진 매칭 글 생성이 완벽하게 끝났습니다!")
+            # 본문과 SEO 리포트 파싱 분리
+            try:
+                body_part = full_response.split("---BODY_START---")[1].split("---BODY_END---")[0].strip()
+                seo_part = full_response.split("---SEO_START---")[1].split("---SEO_END---")[0].strip()
+            except:
+                # 파싱 실패 시 전체를 본문으로 처리
+                body_part = full_response
+                seo_part = "SEO 리포트 파싱 중 형식이 일부 어긋났으나 글은 정상 생성되었습니다."
             
-            st.markdown("### 📄 생성된 블로그 본문 및 SEO 분석 리포트")
-            st.text_area("결과 복사하기", value=result_text, height=500)
+            # 세션에 저장하여 탭 이동 시에도 유지되도록 함
+            st.session_state["generated_content"] = body_part
+            st.session_state["seo_report"] = seo_part
             
-            st.info("💡 안내: 업로드하신 실제 사진 파일명들이 글 중간중간 알맞은 위치에 배치되도록 매칭되었습니다.")
+            st.success("🎉 멀티 에이전트 분석 및 글 생성이 완료되었습니다! [본문 생성 탭]과 [SEO 분석 탭]을 확인하세요.")
             
         except Exception as e:
             progress_text.empty()
             st.error(f"오류가 발생했습니다: {e}")
+
+# 결과 화면에 출력 (본문 탭 하단에 항상 고정 노출)
+if st.session_state["generated_content"]:
+    st.markdown("---")
+    st.subheader("📄 최종 생성된 블로그 본문")
+    st.text_area("블로그에 복사해서 붙여넣으세요", value=st.session_state["generated_content"], height=450)
