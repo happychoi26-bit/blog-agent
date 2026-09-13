@@ -13,7 +13,7 @@ st.set_page_config(
 
 st.title("👑 Pro Multi-Agent Content Automation System")
 st.markdown(
-    "다중 이미지 스마트 배치 + 무료 이미지 자동 추천 + SEO 메타 태그 최적화 엔진"
+    "다중 에이전트 심층 리서치 + 톤 복제 라이터 + SEO 메타 태그 최적화 엔진"
 )
 
 # --- 세션 상태 초기화 (API Key 증발 방지 포함) ---
@@ -97,16 +97,10 @@ with st.sidebar:
         accept_multiple_files=True,
     )
 
-    use_free_stock_images = st.checkbox(
-        "🌐 사진이 부족할 때 무료 스톡 이미지(Unsplash) 자동 추천받기",
-        value=True,
-        help="직접 찍은 사진이 없거나 추가가 필요할 때 주제에 맞는 고화질 무료 이미지를 본문에 매칭해 줍니다.",
-    )
-
     image_placement_mode = st.radio(
         "이미지 배치 방식 선택",
         [
-            "🤖 첨부된 사진/스톡 이미지 개수에 맞춰 본문 전체에 자동 분산 배치",
+            "🤖 첨부된 사진 개수에 맞춰 본문 전체에 자동 분산 배치",
             "📍 도입부 상단에 집중 배치",
             "📍 본문 중간(핵심 시설/서비스) 집중 배치",
             "📍 결론부 직전에 집중 배치",
@@ -137,10 +131,10 @@ with st.sidebar:
         cta_text, cta_url, cta_position = "", "", ""
 
     st.markdown("---")
-    st.markdown("### 🥊 경쟁사 상위 노출 블로그 분석 (텍스트 복사)")
+    st.markdown("### 🥊 경쟁사 상위 노출 블로그 분석 (선택사항)")
     competitor_text_input = st.text_area(
-        "상위 노출 중인 경쟁사 블로그 본문 텍스트 복사·붙여넣기",
-        placeholder="경쟁사 글의 핵심 내용을 마우스로 긁어서 붙여넣으세요.",
+        "상위 노출 중인 경쟁사 블로그 본문 텍스트 복사·붙여넣기 (선택)",
+        placeholder="입력하지 않아도 원고 작성이 정상적으로 가능합니다.",
     )
 
     st.markdown("---")
@@ -180,7 +174,7 @@ def run_style_analyzer_agent(api_key, style_text):
 # --- 2. 경쟁사 분석 에이전트 ---
 def run_competitor_analyzer_agent(api_key, competitor_text):
     if not api_key or not competitor_text.strip():
-        return "분석된 경쟁사 데이터가 없습니다. (경쟁사 텍스트 미입력)"
+        return "분석된 경쟁사 데이터가 없습니다. (선택사항 미입력)"
 
     try:
         genai.configure(api_key=api_key)
@@ -234,7 +228,6 @@ def run_writer_agent(
     competitor_analysis,
     research_trends,
     image_count,
-    use_stock,
     placement_mode,
     use_cta,
     cta_text,
@@ -246,18 +239,11 @@ def run_writer_agent(
     if not api_key:
         return "⚠️ API Key가 입력되지 않았습니다."
 
-    stock_notice = (
-        "또한 무료 스톡 이미지가 필요한 위치에 [📸 무료 추천 이미지 (키워드 매칭) 삽입 위치] 마크를 자연스럽게 포함해 주세요."
-        if use_stock
-        else ""
-    )
-
     image_instruction = f"""
     [이미지 및 시각 자료 배치 가이드]
     - 사용자가 직접 업로드한 사진: {image_count}장
-    - 무료 스톡 이미지 자동 추천 활용 여부: {'사용함' if use_stock else '사용 안 함'}
     - 배치 방식: [{placement_mode}]
-    - 원고 내에서 사진이 필요한 위치마다 적절한 마크(`[📸 이미지 삽입 위치 - 추천 설명: ...]`)를 위 규칙에 맞추어 자연스럽게 삽입해 주세요. {stock_notice}
+    - 원고 내에서 사진이 필요한 위치마다 적절한 마크(`[📸 이미지 삽입 위치 - 추천 설명: ...]`)를 위 규칙에 맞추어 자연스럽게 삽입해 주세요.
     """
 
     cta_instruction = ""
@@ -309,14 +295,11 @@ def run_writer_agent(
         {cta_instruction}
         {custom_instruction}
 
-        [경쟁사 분석 리포트 반영]
-        경쟁사의 약점을 보완하고 차별화 포인트를 글 전반에 녹여내어 압도적으로 유익한 글을 작성해라.
+        [경쟁사 분석 리포트 반영 (선택사항)]
+        {competitor_analysis}
 
         [작성자 스타일 가이드]
         {style_guide}
-
-        [경쟁사 분석 및 킬러 전략]
-        {competitor_analysis}
 
         [심층 리서치 참고자료]
         {research_trends}
@@ -371,7 +354,6 @@ def analyze_seo_performance(article_text, company_name, region):
     else:
         grade = "C등급 (검색 최적화 미흡)"
 
-    # 메타 디스크립션 추출 (본문 앞부분 요약)
     clean_meta = (
         article_text.replace("#", "")
         .replace("*", "")
@@ -429,7 +411,6 @@ if run_button:
                 competitor_analysis=st.session_state.competitor_analysis,
                 research_trends=st.session_state.research_data["trends"],
                 image_count=img_count,
-                use_stock=use_free_stock_images,
                 placement_mode=image_placement_mode,
                 use_cta=use_cta,
                 cta_text=cta_text,
@@ -509,37 +490,6 @@ if st.session_state.article_content is not None:
                         use_container_width=True,
                     )
 
-        # 무료 스톡 이미지 추천 안내 (Unsplash 무료 소스 오픈 연동)
-        if use_free_stock_images:
-            st.markdown("---")
-            st.markdown(
-                "### 🌐 💡 무료 스톡 이미지 자동 추천 (Unsplash High-Res"
-                " Preview)"
-            )
-            st.markdown(
-                "직접 찍은 사진 외에 블로그 퀄리티를 높여줄 **실시간 고화질 무료"
-                " 추천 이미지**입니다. 마음에 드는 이미지를 우클릭하여 저장해"
-                " 사용해 보세요!"
-            )
-            stock_keyword = (
-                f"{region.split()[0]} {company_name}"
-                if region and company_name
-                else "interior review"
-            )
-            stock_cols = st.columns(3)
-            for i, col in enumerate(stock_cols):
-                with col:
-                    # Unsplash Source API를 통한 무료 고화질 랜덤 샘플 이미지 제공
-                    stock_img_url = (
-                        f"https://source.unsplash.com/featured/?{stock_keyword},"
-                        f"shop,{i+1}"
-                    )
-                    st.image(
-                        stock_img_url,
-                        caption=f"무료 추천 이미지 #{i+1} ({stock_keyword})",
-                        use_container_width=True,
-                    )
-
         with st.container(border=True):
             st.markdown(st.session_state.article_content)
 
@@ -598,7 +548,6 @@ if st.session_state.article_content is not None:
 
 else:
     st.info(
-        "👈 사이드바에서 **업체명, 지역, 커스텀 요청사항, 말투/이모지 스타일,"
-        " 무료 이미지 추천 옵션** 등을 입력한 뒤 **[프로 에이전트 파이프라인"
-        " 가동]** 버튼을 눌러보세요."
+        "👈 사이드바에서 **업체명, 지역, 커스텀 요청사항, 말투/이모지 스타일**"
+        " 등을 입력한 뒤 **[프로 에이전트 파이프라인 가동]** 버튼을 눌러보세요."
     )
