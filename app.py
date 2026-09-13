@@ -12,8 +12,8 @@ st.set_page_config(
     layout="wide"
 )
 
-st.title("🚀 네이버 블로그 상위 노출 자동화 프로그램 (멀티 에이전트 시스템)")
-st.markdown("Gemini 3.6 Flash 기반 / 네이버 실시간 MCP 검색 연동 및 심층 분석·SEO 채점 파이프라인")
+st.title("🚀 네이버 블로그 상위 노출 자동화 프로그램 (다중 사진 & 멀티 에이전트)")
+st.markdown("Gemini 3.6 Flash 기반 / 네이버 실시간 MCP 검색 및 다중 사진 파일 매칭 시스템")
 
 # API 키 설정 (사이드바)
 with st.sidebar:
@@ -28,8 +28,8 @@ with st.sidebar:
         
     st.markdown("---")
     st.markdown("### 📌 시스템 상태")
-    st.markdown("- **멀티 에이전트 분석 복구 완료**")
-    st.markdown("- **SEO 100점 만점 채점 기능 활성화**")
+    st.markdown("- **다중 사진 업로드 및 파일명 매칭 복구**")
+    st.markdown("- **멀티 에이전트 분석 및 SEO 채점 활성화**")
     st.markdown("- **네이버 실시간 MCP 검색 연동**")
 
 # -------------------------------------------------------------
@@ -64,9 +64,24 @@ with tab_main:
     )
 
     st.markdown("---")
-    st.subheader("3. 사진 파일 경로 및 이미지 매칭 정보")
-    photo_folder = st.text_input("사진이 저장된 폴더 경로", placeholder="예: C:/Users/Images/Starbucks")
-    photo_count = st.slider("사용할 이미지 장수 권장", min_value=1, max_value=20, value=10)
+    st.subheader("3. 사진 파일 다중 업로드 및 매칭")
+    st.markdown("블로그에 넣을 사진들을 여러 장 한 번에 드래그하거나 선택해서 올려주세요. 에이전트가 파일명을 인식해 본문에 배치해 줍니다.")
+    
+    uploaded_files = st.file_uploader(
+        "사진 파일 다중 선택 (여러 장 업로드 가능)", 
+        type=["png", "jpg", "jpeg", "webp"], 
+        accept_multiple_files=True
+    )
+    
+    # 업로드된 파일들의 이름 목록 추출
+    uploaded_file_names = []
+    if uploaded_files:
+        st.success(f"총 {len.(uploaded_files) if hasattr(uploaded_files, '__len__') else len(list(uploaded_files))}장의 사진이 업로드되었습니다!")
+        # 파일명 리스트 정리
+        uploaded_file_names = [file.name for file in uploaded_files]
+        with st.expander("업로드된 사진 파일명 확인하기"):
+            for name in uploaded_file_names:
+                st.write(f"- 📁 {name}")
 
 with tab_style:
     st.subheader("🎨 스타일 및 레퍼런스 학습 공간")
@@ -100,7 +115,6 @@ if generate_btn:
     elif not company_name or not region:
         st.error("업체명과 지역은 필수 입력 항목입니다!")
     else:
-        # 진행상황을 보여주기 위한 상태 표시 컨테이너
         progress_text = st.empty()
         
         try:
@@ -117,12 +131,17 @@ if generate_btn:
             # [단계 3] 라이터 에이전트 본문 생성
             progress_text.text("✍️ [3단계] 프로 블로그 라이터 에이전트가 상위 노출 최적화 본문을 작성 중입니다...")
             
+            # 업로드된 사진 파일명들을 프롬프트에 동적으로 전달
+            photo_context = "업로드된 사진 없음 (텍스트 위주 구성)"
+            if uploaded_file_names:
+                photo_context = "사용자가 업로드한 실제 사진 파일명 리스트:\n" + "\n".join([f"- {name}" for name in uploaded_file_names])
+            
             system_instruction = f"""
             너는 대한민국 최고의 네이버 블로그 상위 노출(SEO) 전문 에이전트 팀이야. (Gemini 3.6 Flash 구동)
             - 역할: 광고성 냄새를 지우고 독자의 체류 시간을 극대화하는 자연스러운 리얼 후기형 블로그 글을 작성한다.
             - 규칙: 
               1. 외부 무료 스톡 이미지 호출 코드는 절대 생성하지 않는다.
-              2. 본문 중간중간 사진을 배치해야 할 곳에 `[사진: 파일명 (설명)]` 가이드를 명시한다.
+              2. 본문 중간중간 사진을 배치해야 할 곳에 반드시 **사용자가 업로드한 실제 사진 파일명**을 매칭해서 `[사진: 파일명 (어떤 사진인지 설명)]` 형태로 가이드를 명시한다.
               3. 글 작성 완료 후, 하단에 SEO 최적화 점수(100점 만점)와 분석 총평을 함께 리포트한다.
             """
             
@@ -134,6 +153,9 @@ if generate_btn:
             [이번 글 핵심 요청사항 (Custom Prompt)]
             {custom_prompt if custom_prompt else "특별한 요청 없음. 대중적이고 흥미로운 정보성 후기 구성."}
             
+            [사진 파일 매칭 데이터]
+            {photo_context}
+            
             [스타일 및 레퍼런스 학습 데이터]
             - 본인 말투 샘플: {my_tone_sample if my_tone_sample else "친근하고 자연스러운 블로그 어투"}
             - 경쟁사 레퍼런스 샘플: {competitor_sample if competitor_sample else "일반적인 상위 노출 구조 반영"}
@@ -141,7 +163,7 @@ if generate_btn:
             [네이버 검색 MCP 분석 리포트]
             {naver_research}
             
-            위 모든 분석 내용을 종합하여 완성도 높은 블로그 본문을 작성하고, 맨 아래에 SEO 분석 점수 및 리포트를 첨부해 줘.
+            위 모든 분석 내용과 업로드된 사진 파일명들을 정확히 매칭하여 완성도 높은 블로그 본문을 작성하고, 맨 아래에 SEO 분석 점수 및 리포트를 첨부해 줘.
             """
             
             response = client.models.generate_content(
@@ -153,16 +175,16 @@ if generate_btn:
                 ),
             )
             
-            progress_text.empty() # 진행 상태 문구 지우기
+            progress_text.empty()
             result_text = response.text
             
             # 결과 출력 화면
-            st.success("🎉 멀티 에이전트 분석 및 블로그 글 생성이 완벽하게 끝났습니다!")
+            st.success("🎉 멀티 에이전트 분석 및 사진 매칭 글 생성이 완벽하게 끝났습니다!")
             
             st.markdown("### 📄 생성된 블로그 본문 및 SEO 분석 리포트")
             st.text_area("결과 복사하기", value=result_text, height=500)
             
-            st.info("💡 안내: 리서치, 스타일 분석, 라이팅, SEO 채점까지 전 과정이 Gemini 3.6 에이전트를 통해 완벽하게 수행되었습니다.")
+            st.info("💡 안내: 업로드하신 실제 사진 파일명들이 글 중간중간 알맞은 위치에 배치되도록 매칭되었습니다.")
             
         except Exception as e:
             progress_text.empty()
