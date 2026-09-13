@@ -11,7 +11,7 @@ st.set_page_config(
     layout="wide",
 )
 
-st.title("👑 Pro Multi-Agent Content Automation System")
+st.title("👑 최선생의 블로그 자동화 ")
 st.markdown(
     "다중 에이전트 심층 리서치 + 톤 복제 라이터 + SEO 메타 태그 최적화 엔진"
 )
