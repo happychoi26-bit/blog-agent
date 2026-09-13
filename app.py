@@ -1,4 +1,5 @@
 import os
+import requests
 import streamlit as st
 from google import genai
 from google.genai import types
@@ -7,42 +8,83 @@ from google.genai import types
 # 0. 페이지 설정 및 초기화
 # -------------------------------------------------------------
 st.set_page_config(
-    page_title="블로그 자동화 에이전트 (Gemini 3.6)",
+    page_title="블로그 자동화 에이전트 (실제 네이버 API 연동)",
     page_icon="✍️",
     layout="wide"
 )
 
-st.title("🚀 네이버 블로그 상위 노출 자동화 프로그램 (3단 탭 시스템)")
-st.markdown("Gemini 3.6 Flash 기반 / 멀티 에이전트 / 다중 사진 매칭 및 SEO 분석 탭 분리")
+st.title("🚀 네이버 블로그 상위 노출 자동화 프로그램 (실제 네이버 검색 API 연동)")
+st.markdown("Gemini 3.6 Flash 기반 / **진짜 네이버 블로그 실시간 검색 데이터 리서치** / SEO 분석 탭 분리")
 
 # API 키 설정 (사이드바)
 with st.sidebar:
-    st.header("🔑 설정")
+    st.header("🔑 API 설정")
     api_key_input = st.text_input("Google Gemini API Key", type="password", value=os.environ.get("GEMINI_API_KEY", ""))
-    
     if api_key_input:
         os.environ["GEMINI_API_KEY"] = api_key_input
-        st.success("API Key 설정 완료!")
+        st.success("Gemini API Key 설정 완료!")
     else:
-        st.warning("Google AI Studio에서 발급받은 API Key를 입력해주세요.")
+        st.warning("Google AI Studio API Key를 입력해주세요.")
         
     st.markdown("---")
-    st.markdown("### 📌 시스템 안내")
-    st.markdown("- **본문 / 스타일 / SEO 분석 탭 분리 완료**")
-    st.markdown("- **다중 사진 파일명 자동 매칭 활성화**")
-    st.markdown("- **Gemini 3.6 Flash 멀티 에이전트 구동**")
+    st.markdown("### 🔍 네이버 검색 API 설정 (진짜 데이터 연동용)")
+    st.markdown("1. [네이버 개발자 센터](https://developers.naver.com/) 접속\n2. Application 등록 -> 검색(블로그) 권한 신청\n3. Client ID와 Secret을 아래에 입력")
+    
+    naver_client_id = st.text_input("Naver Client ID", type="password")
+    naver_client_secret = st.text_input("Naver Client Secret", type="password")
+    
+    if naver_client_id and naver_client_secret:
+        st.success("네이버 API 인증 정보 입력됨!")
+    else:
+        st.info("💡 네이버 API 키가 없으면 검색 리서치가 기본 키워드 기반으로 동작합니다.")
 
 # -------------------------------------------------------------
-# 1. 네이버 검색 모듈 (상태 저장용 세션)
+# 1. [진짜] 네이버 블로그 검색 API 연동 모듈
 # -------------------------------------------------------------
 if "generated_content" not in st.session_state:
     st.session_state["generated_content"] = ""
 if "seo_report" not in st.session_state:
     st.session_state["seo_report"] = ""
 
-def search_naver_morphic_data(query: str):
-    # 실시간 검색 시뮬레이션 (추후 실제 네이버 API/MCP 확장 가능 구조)
-    return f"[네이버 실시간 검색 리서치 연동] '{query}' 키워드 기준 상위 노출 블로그의 평균 분량, 체류 시간 유도 패턴, 핵심 서브 키워드 분석 완료."
+def search_naver_blog_real(query: str, client_id: str, client_secret: str):
+    """
+    네이버 Open API를 사용하여 실제로 실시간 블로그 검색 결과를 가져오는 함수
+    """
+    if not client_id or not client_secret:
+        return "[알림] 네이버 Client ID와 Secret이 입력되지 않아, Gemini 3.6 모델의 자체 지식 기반으로 리서치를 대체합니다."
+    
+    url = "https://openapi.naver.com/v1/search/blog.json"
+    headers = {
+        "X-Naver-Client-Id": client_id,
+        "X-Naver-Client-Secret": client_secret
+    }
+    params = {
+        "query": query,
+        "display": 5,  # 상위 5개 블로그 글 가져오기
+        "sort": "sim"  # 정확도순 (sim) 또는 최신순 (date)
+    }
+    
+    try:
+        response = requests.get(url, headers=headers, params=params)
+        if response.status_code == 200:
+            data = response.json()
+            items = data.get("items", [])
+            
+            if not items:
+                return f"'{query}'에 대한 실제 네이버 블로그 검색 결과가 없습니다."
+            
+            # 검색된 실제 블로그 글 제목과 내용을 요약 데이터로 가공
+            result_summary = f"[네이버 실시간 검색 API 연동 성공] '{query}' 검색 결과 상위 블로그 요약:\n"
+            for i, item in enumerate(items, 1):
+                # HTML 태그 제거 (<b> 등)
+                clean_title = item['title'].replace('<b>', '').replace('</b>', '')
+                clean_desc = item['description'].replace('<b>', '').replace('</b>', '')
+                result_summary += f"{i}. 제목: {clean_title} / 내용 요약: {clean_desc[:100]}...\n"
+            return result_summary
+        else:
+            return f"[네이버 API 오류 발생] 코드: {response.status_code}, 메시지: {response.text}"
+    except Exception as e:
+        return f"[네이버 API 통신 에러] {str(e)}"
 
 # -------------------------------------------------------------
 # 2. 3단 탭(Tab) UI 구성
@@ -121,7 +163,7 @@ with tab_seo:
 # 3. 멀티 에이전트 실행 및 결과 저장 파이프라인
 # -------------------------------------------------------------
 st.markdown("---")
-generate_btn = st.button("✨ 멀티 에이전트 가동 및 블로그 글 생성하기 (Gemini 3.6)", type="primary", use_container_width=True)
+generate_btn = st.button("✨ 멀티 에이전트 가동 및 블로그 글 생성하기 (진짜 네이버 API 연동)", type="primary", use_container_width=True)
 
 if generate_btn:
     if not api_key_input:
@@ -135,12 +177,14 @@ if generate_btn:
             client = genai.Client(api_key=os.environ["GEMINI_API_KEY"])
             model_name = "gemini-3.6-flash"
             
-            progress_text.text("🔍 [1단계] 리서치 에이전트가 지역 키워드 트렌드를 분석 중입니다...")
-            naver_research = search_naver_morphic_data(f"{region} {company_name}")
+            # [단계 1] 진짜 네이버 API 검색 실행
+            progress_text.text("🔍 [1단계] 네이버 Open API를 통해 실제 상위 블로그 글들을 실시간 검색 중입니다...")
+            search_query = f"{region} {company_name}"
+            naver_research = search_naver_blog_real(search_query, naver_client_id, naver_client_secret)
             
             progress_text.text("🧠 [2단계] 스타일 분석가 에이전트가 레퍼런스를 해체 중입니다...")
             
-            progress_text.text("✍️ [3단계] 라이터 에이전트가 상위 노출 최적화 본문을 작성 중입니다...")
+            progress_text.text("✍️ [3단계] 라이터 에이전트가 실제 검색 데이터를 반영해 최적화 본문을 작성 중입니다...")
             
             photo_context = "업로드된 사진 없음 (텍스트 위주 구성)"
             if uploaded_file_names:
@@ -148,7 +192,7 @@ if generate_btn:
             
             system_instruction = f"""
             너는 대한민국 최고의 네이버 블로그 상위 노출(SEO) 전문 에이전트 팀이야. (Gemini 3.6 Flash 구동)
-            - 역할: 광고성 느낌을 지우고 독자의 체류 시간을 극대화하는 자연스러운 리얼 후기형 블로그 글을 작성한다.
+            - 역할: 제공된 '실제 네이버 검색 데이터'를 바탕으로 트렌드를 반영하고, 광고성 느낌을 지운 자연스러운 리얼 후기형 블로그 글을 작성한다.
             - 규칙: 
               1. 외부 무료 스톡 이미지 호출 코드는 절대 생성하지 않는다.
               2. 본문 중간중간 사진을 배치해야 할 곳에 반드시 **사용자가 업로드한 실제 사진 파일명**을 매칭해서 `[사진: 파일명 (어떤 사진인지 설명)]` 형태로 가이드를 명시한다.
@@ -176,7 +220,7 @@ if generate_btn:
             - 본인 말투 샘플: {my_tone_sample if my_tone_sample else "친근하고 자연스러운 블로그 어투"}
             - 경쟁사 레퍼런스 샘플: {competitor_sample if competitor_sample else "일반적인 상위 노출 구조 반영"}
             
-            [검색 리서치 분석 리포트]
+            [네이버 실시간 검색 API 리서치 데이터]
             {naver_research}
             
             위 모든 내용을 종합하여 블로그 본문과 SEO 리포트를 지정된 구분자(---BODY_START--- 등)에 맞춰 작성해 줘.
@@ -199,15 +243,13 @@ if generate_btn:
                 body_part = full_response.split("---BODY_START---")[1].split("---BODY_END---")[0].strip()
                 seo_part = full_response.split("---SEO_START---")[1].split("---SEO_END---")[0].strip()
             except:
-                # 파싱 실패 시 전체를 본문으로 처리
                 body_part = full_response
                 seo_part = "SEO 리포트 파싱 중 형식이 일부 어긋났으나 글은 정상 생성되었습니다."
             
-            # 세션에 저장하여 탭 이동 시에도 유지되도록 함
             st.session_state["generated_content"] = body_part
             st.session_state["seo_report"] = seo_part
             
-            st.success("🎉 멀티 에이전트 분석 및 글 생성이 완료되었습니다! [본문 생성 탭]과 [SEO 분석 탭]을 확인하세요.")
+            st.success("🎉 실제 네이버 검색 데이터 연동 및 글 생성이 완료되었습니다! [본문 생성 탭]과 [SEO 분석 탭]을 확인하세요.")
             
         except Exception as e:
             progress_text.empty()
