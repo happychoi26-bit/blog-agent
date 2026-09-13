@@ -165,7 +165,7 @@ def run_style_analyzer_agent(api_key, style_text):
 
     try:
         genai.configure(api_key=api_key)
-        model = genai.GenerativeModel("gemini-1.5-flash")
+        model = genai.GenerativeModel("gemini-3.6-flash")
         prompt = f"""
         너는 프로페셔널 문체 분석가야. 아래 사용자가 직접 작성한 실제 블로그 글 텍스트를 분석하여, 다른 AI 라이터가 이 글과 100% 똑같은 어투, 문장 끝맺음, 호흡, 스타일로 글을 쓰도록 '스타일 가이드'를 도출해 줘.
         [사용자 샘플 텍스트 데이터]
@@ -184,7 +184,7 @@ def run_competitor_analyzer_agent(api_key, competitor_text):
 
     try:
         genai.configure(api_key=api_key)
-        model = genai.GenerativeModel("gemini-1.5-flash")
+        model = genai.GenerativeModel("gemini-3.6-flash")
         prompt = f"""
         너는 국내 최고 수준의 SEO 마케팅 전략가야. 아래 제공된 경쟁사 블로그 본문 텍스트를 분석해 줘.
         1. 상위 노출의 핵심 원인 (어떤 키워드와 정보 구조를 썼는지)
@@ -206,7 +206,7 @@ def run_researcher_agent(api_key, company_name, region, perspective):
 
     try:
         genai.configure(api_key=api_key)
-        model = genai.GenerativeModel("gemini-1.5-flash")
+        model = genai.GenerativeModel("gemini-3.6-flash")
         prompt = f"""
         지역 '{region}'에 위치한 업체 '{company_name}'와 관련하여, 선택된 관점('{perspective}')에 맞추어 최신 트렌드 및 소비자들이 궁금해하는 핵심 소주제들을 정리해 줘.
         """
@@ -288,7 +288,7 @@ def run_writer_agent(
 
     try:
         genai.configure(api_key=api_key)
-        model = genai.GenerativeModel("gemini-1.5-flash")
+        model = genai.GenerativeModel("gemini-3.6-flash")
 
         prompt = f"""
         너는 상위 노출을 지배하는 수석 블로그 라이터 에이전트이자 최고급 타이틀 전략가야.
