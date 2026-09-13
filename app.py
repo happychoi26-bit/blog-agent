@@ -73,11 +73,11 @@ with tab_main:
         accept_multiple_files=True
     )
     
-    # 업로드된 파일들의 이름 목록 추출
+    # 업로드된 파일들의 이름 목록 추출 (문법 오류 수정 완료)
     uploaded_file_names = []
     if uploaded_files:
-        st.success(f"총 {len.(uploaded_files) if hasattr(uploaded_files, '__len__') else len(list(uploaded_files))}장의 사진이 업로드되었습니다!")
-        # 파일명 리스트 정리
+        file_count = len(uploaded_files)
+        st.success(f"총 {file_count}장의 사진이 업로드되었습니다!")
         uploaded_file_names = [file.name for file in uploaded_files]
         with st.expander("업로드된 사진 파일명 확인하기"):
             for name in uploaded_file_names:
