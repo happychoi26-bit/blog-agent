@@ -14,7 +14,7 @@ st.set_page_config(
 )
 
 st.title("🚀 네이버 블로그 상위 노출 자동화 프로그램")
-st.markdown("Gemini 3.6 Flash 기반 / 멀티 에이전트 / 목적별 글쓰기 모드 및 SEO 분석 탭 분리")
+st.markdown("Gemini 3.6 Flash 기반 / 멀티 에이전트 / 타겟 키워드 전략 배치 및 SEO 분석 탭 분리")
 
 # API 키 설정 (사이드바)
 with st.sidebar:
@@ -72,20 +72,20 @@ def search_naver_blog_real(query: str, client_id: str, client_secret: str):
 # -------------------------------------------------------------
 tab_main, tab_style, tab_seo = st.tabs([
     "📝 본문 생성 (Main)", 
-    "🧠 데이터 및 레퍼런스 학습", 
+    "🧠 레퍼런스 및 SEO 설정", 
     "📊 SEO 분석 및 리포트"
 ])
 
 with tab_main:
-    st.subheader("1. 기본 정보 입력")
+    st.subheader("1. 기본 정보 및 타겟 키워드 설정")
     col1, col2 = st.columns(2)
     with col1:
-        company_name = st.text_input("업체명 (상호명)", placeholder="예: 스타벅스 역삼점 또는 스마트코딩학원")
+        company_name = st.text_input("업체명 (상호명)", placeholder="예: 스마트코딩학원 역삼점")
     with col2:
-        region = st.text_input("지역 / 위치", placeholder="예: 서울 강남구 역삼동")
+        target_keyword = st.text_input("메인 타겟 키워드", placeholder="예: 강남 코딩학원 추천")
 
     st.markdown("---")
-    st.subheader("2. 콘텐츠 목적 및 관점 선택")
+    st.subheader("2. 콘텐츠 목적 및 작성 관점 선택")
     writing_mode = st.radio(
         "작성할 글의 성격과 시점을 선택하세요",
         [
@@ -97,11 +97,22 @@ with tab_main:
     )
 
     st.markdown("---")
-    st.subheader("3. 핵심 요청사항 (Custom Prompt)")
+    st.subheader("3. 키워드 배치 전략 (SEO 최적화)")
+    keyword_strategy = st.selectbox(
+        "타겟 키워드를 본문에 녹여낼 배치 방식을 선택하세요",
+        [
+            "💡 [추천] 스마트 균등 분산 (제목, 서두, 본문 중간, 결론에 자연스럽게 배치)",
+            "🚀 상단 집중형 (검색 유입 극대화를 위해 글의 시작 부분에 키워드 강한 배치)",
+            "🔀 자연스러운 랜덤 녹임 (인위적이지 않게 문장 흐름에 맞춰 툭툭 던지듯 분산)"
+        ]
+    )
+
+    st.markdown("---")
+    st.subheader("4. 핵심 요청사항 (Custom Prompt)")
     custom_prompt = st.text_area(
         "이번 글만의 특별한 이벤트, 강조 포인트, 주의사항을 적어주세요",
         placeholder="예: 이번 주말에만 선착순 3명에게 무료 레슨 진행한다는 점을 강조해 줘.",
-        height=130
+        height=120
     )
 
 with tab_style:
@@ -130,8 +141,8 @@ generate_btn = st.button("✨ 멀티 에이전트 가동 및 콘텐츠 생성하
 if generate_btn:
     if not api_key_input:
         st.error("오른쪽 사이드바에 Google Gemini API Key를 먼저 입력해주세요!")
-    elif not company_name or not region:
-        st.error("업체명과 지역은 필수 입력 항목입니다!")
+    elif not company_name or not target_keyword:
+        st.error("업체명과 메인 타겟 키워드는 필수 입력 항목입니다!")
     else:
         progress_text = st.empty()
         
@@ -139,8 +150,8 @@ if generate_btn:
             client = genai.Client(api_key=os.environ["GEMINI_API_KEY"])
             model_name = "gemini-3.6-flash"
             
-            progress_text.text("🔍 [1단계] 리서치 및 상위 노출 트렌드 분석 중...")
-            naver_research = search_naver_blog_real(f"{region} {company_name}", naver_client_id, naver_client_secret)
+            progress_text.text("🔍 [1단계] 실시간 리서치 및 타겟 키워드 트렌드 분석 중...")
+            naver_research = search_naver_blog_real(target_keyword, naver_client_id, naver_client_secret)
             
             # 선택된 모드에 따른 페르소나 지시사항 분기
             if "후기형" in writing_mode:
@@ -150,29 +161,30 @@ if generate_btn:
             else:
                 mode_instruction = "[작성 모드: 쇼츠 스크립트 (학원/업체 입장)] - 1분 안에 시청자의 이목을 사로잡을 수 있도록 [화면 연출]과 [나레이션 대사]가 구분된 역동적인 숏폼 대본 형식으로 작성."
 
-            # 공통 배경 데이터 묶음
+            # 공통 배경 데이터 묶음 (타겟 키워드 및 배치 전략 포함)
             base_context = f"""
-            [기본 정보] - 업체명: {company_name} / 지역: {region}
+            [기본 정보] - 업체명: {company_name} / 메인 타겟 키워드: "{target_keyword}"
             {mode_instruction}
+            [키워드 배치 전략] {keyword_strategy} (이 전략에 맞춰 본문 안에서 키워드가 적재적소에 노출되도록 작성할 것)
             [핵심 요청사항] {custom_prompt if custom_prompt else "일반적인 정보성 내용"}
             [경쟁사 레퍼런스 참고] {competitor_sample or "일반 상위 노출 구조"}
-            [리서치 데이터] {naver_research}
+            [네이버 검색 리서치 데이터] {naver_research}
             """
 
             # [단계 2] 콘텐츠 본문 생성
-            progress_text.text("✍️ [2단계] 라이터 에이전트가 최적화 콘텐츠를 작성 중입니다...")
-            body_prompt = f"{base_context}\n\n위 데이터를 바탕으로 네이버 상위 노출에 최적화된 고품질 결과물을 작성해 줘."
+            progress_text.text("✍️ [2단계] 라이터 에이전트가 키워드 전략을 반영하여 콘텐츠를 작성 중입니다...")
+            body_prompt = f"{base_context}\n\n위 데이터를 바탕으로 네이버 상위 노출에 최적화된 고품질 결과물을 작성해 줘. 특히 타겟 키워드('{target_keyword}')가 선택한 배치 전략에 맞게 자연스럽고 효과적으로 녹아들어야 한다."
             body_response = client.models.generate_content(model=model_name, contents=body_prompt)
             st.session_state["generated_content"] = body_response.text
 
             # [단계 3] SEO 분석 리포트 별도 생성
-            progress_text.text("📊 [3단계] SEO 분석 에이전트가 상위 노출 점수와 피드백을 채점 중입니다...")
-            seo_prompt = f"다음은 방금 작성된 콘텐츠입니다:\n\n{body_response.text}\n\n이 글을 바탕으로 네이버 SEO 상위 노출 관점에서 100점 만점 점수, 키워드 배치 상태, 그리고 개선 피드백을 마크다운 리포트로 상세히 작성해 줘."
+            progress_text.text("📊 [3단계] SEO 분석 에이전트가 키워드 배치 상태와 상위 노출 점수를 채점 중입니다...")
+            seo_prompt = f"다음은 방금 작성된 콘텐츠입니다:\n\n{body_response.text}\n\n이 글을 바탕으로 메인 타겟 키워드('{target_keyword}')가 네이버 SEO 관점에서 적재적소에 잘 배치되었는지 평가하고, 100점 만점 점수와 개선 피드백을 마크다운 리포트로 상세히 작성해 줘."
             seo_response = client.models.generate_content(model=model_name, contents=seo_prompt)
             st.session_state["seo_report"] = seo_response.text
             
             progress_text.empty()
-            st.success("🎉 콘텐츠 생성 및 SEO 분석 리포트 작성이 완료되었습니다! [SEO 분석 및 리포트] 탭을 확인해보세요.")
+            st.success("🎉 콘텐츠 생성 및 키워드 SEO 분석 리포트 작성이 완료되었습니다! [SEO 분석 및 리포트] 탭을 확인해보세요.")
             
         except Exception as e:
             progress_text.empty()
