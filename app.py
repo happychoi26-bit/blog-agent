@@ -14,7 +14,7 @@ st.set_page_config(
 )
 
 st.title("🚀 네이버 블로그 상위 노출 자동화 프로그램")
-st.markdown("Gemini 3.6 Flash 기반 / 모바일 최적화 및 담백한 휴먼 톤 작성 모듈")
+st.markdown("Gemini 3.6 Flash 기반 / 모바일 완벽 최적화 및 100% 긍정 휴먼 톤 작성 모듈")
 
 # API 키 설정 (사이드바)
 with st.sidebar:
@@ -22,7 +22,7 @@ with st.sidebar:
     api_key_input = st.text_input("Google Gemini API Key", type="password", value=os.environ.get("GEMINI_API_KEY", ""))
     if api_key_input:
         os.environ["GEMINI_API_KEY"] = api_key_input
-        st.success("Gemini API Key 설정 완료!")
+        st.success("Google Gemini API Key 설정 완료!")
     else:
         st.warning("Google AI Studio API Key를 입력해주세요.")
         
@@ -152,33 +152,33 @@ if generate_btn:
             progress_text.text("🔍 [1단계] 실시간 리서치 및 타겟 키워드 트렌드 분석 중...")
             naver_research = search_naver_blog_real(target_keyword, naver_client_id, naver_client_secret)
             
-            # 선택된 모드에 따른 페르소나 지시사항 분기 (부정적 표현 및 AI 특유 멘트 배제 지침 추가)
+            # [100% 긍정 톤 및 모바일 최적화 작성 철학]
             tone_guideline = """
             [작성 절대 원칙 (매우 중요)]
-            1. '고민 때문에 선뜻 시작하지 못한다', '문의가 쇄도한다', '딱딱한 이미지에서 벗어나' 같은 뻔하고 인위적인 AI 식 표현이나 부정적인 표현은 절대 쓰지 말 것.
-            2. 상업적인 광고 멘트(예: 당장 연락 주세요 등)를 배제하고, 사람이 직접 진심을 담아 작성한 듯한 담백하고 정제된 문장으로 작성할 것.
-            3. 모바일 블로그 가독성을 극대화하기 위해 별표 기호(**) 같은 마크다운 남발을 최소화하고, 문단을 짧고 깔끔하게 나눌 것.
+            1. 100% 긍정 마인드셋 유지: 독자의 불안감을 자극하는 표현(예: 혼자 하면 지친다, 못한다, 어렵다 등)은 일체 금지합니다. 혼자서도 잘할 수 있지만, 함께하면 훨씬 더 즐겁고 시너지가 난다는 긍정적이고 희망찬 언어로 작성하세요.
+            2. 상업적 강요 배제: '당장 연락 주세요', '문의가 쇄도합니다' 같은 억지 홍보 멘트를 완전히 배제하고, 독자가 읽으면서 자연스럽게 호감을 느끼고 발걸음하고 싶어지도록 담백하게 이끌어주세요.
+            3. 모바일 가독성 최우선: 마크다운 볼드 기호(**)나 복잡한 특수문자 사용을 완전히 배제합니다. 오직 문단 띄어쓰기와 깔끔한 줄바꿈, 그리고 심플한 글머리 기호(-)만 사용하여 스마트폰 화면에서 스크롤이 시원시원하게 넘어가도록 작성하세요.
             """
 
             if "후기형" in writing_mode:
-                mode_instruction = f"{tone_guideline}\n[작성 모드: 후기형 (수강생/고객 입장)] - 실제 수강생의 시점에서 경험을 바탕으로 친근하고 진솔하게 작성."
+                mode_instruction = f"{tone_guideline}\n[작성 모드: 후기형 (수강생/고객 입장)] - 실제 수강생의 시점에서 즐거웠던 경험을 바탕으로 친근하고 감성적으로 진솔하게 작성."
             elif "정보성" in writing_mode:
-                mode_instruction = f"{tone_guideline}\n[작성 모드: 정보성 (학원/업체 입장)] - 전문가의 시각에서 실질적인 도움을 주는 정보를 깔끔하고 전문적으로 가이드하듯 작성."
+                mode_instruction = f"{tone_guideline}\n[작성 모드: 정보성 (학원/업체 입장)] - 전문가의 따뜻한 시각에서 유익하고 가치 있는 정보를 친절하게 안내하듯 작성."
             else:
-                mode_instruction = f"{tone_guideline}\n[작성 모드: 쇼츠 스크립트 (학원/업체 입장)] - 1분 안에 시청자의 시선을 잡을 수 있도록 [화면 연출]과 [나레이션 대사]로 나누어 역동적으로 작성."
+                mode_instruction = f"{tone_guideline}\n[작성 모드: 쇼츠 스크립트 (학원/업체 입장)] - 1분 안에 시청자의 미소를 자아낼 수 있도록 [화면 연출]과 [나레이션 대사]로 나누어 밝고 역동적으로 작성."
 
             # 공통 배경 데이터 묶음
             base_context = f"""
             [기본 정보] - 업체명: {company_name} / 메인 타겟 키워드: "{target_keyword}"
             {mode_instruction}
-            [키워드 배치 전략] {keyword_strategy} (이 스타일에 맞춰 타겟 키워드가 자연스럽게 녹아들도록 할 것)
+            [키워드 배치 전략] {keyword_strategy} (이 스타일에 맞춰 타겟 키워드가 문맥 속에 자연스럽고 부드럽게 녹아들도록 할 것)
             [핵심 요청사항] {custom_prompt if custom_prompt else "일반적인 정보성 내용"}
             [경쟁사 레퍼런스 참고] {competitor_sample or "일반 상위 노출 구조"}
             [네이버 검색 리서치 데이터] {naver_research}
             """
 
             # [단계 2] 콘텐츠 본문 생성
-            progress_text.text("✍️ [2단계] 라이터 에이전트가 모바일 최적화 및 휴먼 톤으로 콘텐츠를 작성 중입니다...")
+            progress_text.text("✍️ [2단계] 라이터 에이전트가 모바일 가독성과 100% 긍정 휴먼 톤으로 콘텐츠를 작성 중입니다...")
             body_prompt = f"{base_context}\n\n위 데이터를 바탕으로 네이버 상위 노출에 최적화된 고품질 결과물을 작성해 줘. 타겟 키워드('{target_keyword}')가 어색하지 않게 잘 녹아들어야 한다."
             body_response = client.models.generate_content(model=model_name, contents=body_prompt)
             st.session_state["generated_content"] = body_response.text
