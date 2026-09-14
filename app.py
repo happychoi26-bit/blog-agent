@@ -14,7 +14,7 @@ st.set_page_config(
 )
 
 st.title("🚀 네이버 블로그 상위 노출 자동화 프로그램")
-st.markdown("Gemini 3.6 Flash 기반 / 멀티 에이전트 / 타겟 키워드 전략 배치 및 SEO 분석 탭 분리")
+st.markdown("Gemini 3.6 Flash 기반 / 모바일 최적화 및 담백한 휴먼 톤 작성 모듈")
 
 # API 키 설정 (사이드바)
 with st.sidebar:
@@ -80,9 +80,9 @@ with tab_main:
     st.subheader("1. 기본 정보 및 타겟 키워드 설정")
     col1, col2 = st.columns(2)
     with col1:
-        company_name = st.text_input("업체명 (상호명)", placeholder="예: 스마트코딩학원 역삼점")
+        company_name = st.text_input("업체명 (상호명)", placeholder="예: 이음뮤직학원")
     with col2:
-        target_keyword = st.text_input("메인 타겟 키워드", placeholder="예: 강남 코딩학원 추천")
+        target_keyword = st.text_input("메인 타겟 키워드", placeholder="예: 인천논현동실용음악학원")
 
     st.markdown("---")
     st.subheader("2. 콘텐츠 목적 및 작성 관점 선택")
@@ -110,8 +110,8 @@ with tab_main:
     st.markdown("---")
     st.subheader("4. 핵심 요청사항 (Custom Prompt)")
     custom_prompt = st.text_area(
-        "이번 글만의 특별한 이벤트, 강조 포인트, 주의사항을 적어주세요",
-        placeholder="예: 이번 주말에만 선착순 3명에게 무료 레슨 진행한다는 점을 강조해 줘.",
+        "이번 글만의 특별한 이야기, 강조하고 싶은 시설이나 특징을 적어주세요",
+        placeholder="예: 월간 공연 프로그램과 수강생 합주실 환경을 강조해 줘.",
         height=120
     )
 
@@ -126,7 +126,6 @@ with tab_style:
 
 with tab_seo:
     st.subheader("📊 SEO 분석 및 에이전트 리포트")
-    # 세션에 저장된 SEO 리포트 출력 (탭 이동해도 유지됨)
     if st.session_state["seo_report"]:
         st.markdown(st.session_state["seo_report"])
     else:
@@ -153,27 +152,34 @@ if generate_btn:
             progress_text.text("🔍 [1단계] 실시간 리서치 및 타겟 키워드 트렌드 분석 중...")
             naver_research = search_naver_blog_real(target_keyword, naver_client_id, naver_client_secret)
             
-            # 선택된 모드에 따른 페르소나 지시사항 분기
-            if "후기형" in writing_mode:
-                mode_instruction = "[작성 모드: 후기형 (수강생/고객 입장)] - 실제 방문하거나 수강한 고객의 시점에서 솔직하고 친근하며 신뢰감 가는 어투로 작성."
-            elif "정보성" in writing_mode:
-                mode_instruction = "[작성 모드: 정보성 (학원/업체 입장)] - 해당 분야의 전문가 입장에서 깊이 있는 정보와 노하우를 체계적이고 신뢰도 있게 전달하는 구조로 작성."
-            else:
-                mode_instruction = "[작성 모드: 쇼츠 스크립트 (학원/업체 입장)] - 1분 안에 시청자의 이목을 사로잡을 수 있도록 [화면 연출]과 [나레이션 대사]가 구분된 역동적인 숏폼 대본 형식으로 작성."
+            # 선택된 모드에 따른 페르소나 지시사항 분기 (부정적 표현 및 AI 특유 멘트 배제 지침 추가)
+            tone_guideline = """
+            [작성 절대 원칙 (매우 중요)]
+            1. '고민 때문에 선뜻 시작하지 못한다', '문의가 쇄도한다', '딱딱한 이미지에서 벗어나' 같은 뻔하고 인위적인 AI 식 표현이나 부정적인 표현은 절대 쓰지 말 것.
+            2. 상업적인 광고 멘트(예: 당장 연락 주세요 등)를 배제하고, 사람이 직접 진심을 담아 작성한 듯한 담백하고 정제된 문장으로 작성할 것.
+            3. 모바일 블로그 가독성을 극대화하기 위해 별표 기호(**) 같은 마크다운 남발을 최소화하고, 문단을 짧고 깔끔하게 나눌 것.
+            """
 
-            # 공통 배경 데이터 묶음 (타겟 키워드 및 배치 전략 포함)
+            if "후기형" in writing_mode:
+                mode_instruction = f"{tone_guideline}\n[작성 모드: 후기형 (수강생/고객 입장)] - 실제 수강생의 시점에서 경험을 바탕으로 친근하고 진솔하게 작성."
+            elif "정보성" in writing_mode:
+                mode_instruction = f"{tone_guideline}\n[작성 모드: 정보성 (학원/업체 입장)] - 전문가의 시각에서 실질적인 도움을 주는 정보를 깔끔하고 전문적으로 가이드하듯 작성."
+            else:
+                mode_instruction = f"{tone_guideline}\n[작성 모드: 쇼츠 스크립트 (학원/업체 입장)] - 1분 안에 시청자의 시선을 잡을 수 있도록 [화면 연출]과 [나레이션 대사]로 나누어 역동적으로 작성."
+
+            # 공통 배경 데이터 묶음
             base_context = f"""
             [기본 정보] - 업체명: {company_name} / 메인 타겟 키워드: "{target_keyword}"
             {mode_instruction}
-            [키워드 배치 전략] {keyword_strategy} (이 전략에 맞춰 본문 안에서 키워드가 적재적소에 노출되도록 작성할 것)
+            [키워드 배치 전략] {keyword_strategy} (이 스타일에 맞춰 타겟 키워드가 자연스럽게 녹아들도록 할 것)
             [핵심 요청사항] {custom_prompt if custom_prompt else "일반적인 정보성 내용"}
             [경쟁사 레퍼런스 참고] {competitor_sample or "일반 상위 노출 구조"}
             [네이버 검색 리서치 데이터] {naver_research}
             """
 
             # [단계 2] 콘텐츠 본문 생성
-            progress_text.text("✍️ [2단계] 라이터 에이전트가 키워드 전략을 반영하여 콘텐츠를 작성 중입니다...")
-            body_prompt = f"{base_context}\n\n위 데이터를 바탕으로 네이버 상위 노출에 최적화된 고품질 결과물을 작성해 줘. 특히 타겟 키워드('{target_keyword}')가 선택한 배치 전략에 맞게 자연스럽고 효과적으로 녹아들어야 한다."
+            progress_text.text("✍️ [2단계] 라이터 에이전트가 모바일 최적화 및 휴먼 톤으로 콘텐츠를 작성 중입니다...")
+            body_prompt = f"{base_context}\n\n위 데이터를 바탕으로 네이버 상위 노출에 최적화된 고품질 결과물을 작성해 줘. 타겟 키워드('{target_keyword}')가 어색하지 않게 잘 녹아들어야 한다."
             body_response = client.models.generate_content(model=model_name, contents=body_prompt)
             st.session_state["generated_content"] = body_response.text
 
@@ -184,7 +190,7 @@ if generate_btn:
             st.session_state["seo_report"] = seo_response.text
             
             progress_text.empty()
-            st.success("🎉 콘텐츠 생성 및 키워드 SEO 분석 리포트 작성이 완료되었습니다! [SEO 분석 및 리포트] 탭을 확인해보세요.")
+            st.success("🎉 콘텐츠 생성 및 SEO 분석 리포트 작성이 완료되었습니다! [SEO 분석 및 리포트] 탭을 확인해보세요.")
             
         except Exception as e:
             progress_text.empty()
@@ -194,4 +200,4 @@ if generate_btn:
 if st.session_state["generated_content"]:
     st.markdown("---")
     st.subheader("📄 최종 생성된 콘텐츠 결과물")
-    st.text_area("결과물을 복사해서 사용하세요", value=st.session_state["generated_content"], height=480)
+    st.text_area("블로그에 복사해서 사용하세요", value=st.session_state["generated_content"], height=480)
