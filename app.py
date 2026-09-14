@@ -14,7 +14,7 @@ st.set_page_config(
 )
 
 st.title("🚀 네이버 블로그 상위 노출 자동화 프로그램")
-st.markdown("Gemini 3.6 Flash 기반 / 멀티 에이전트 / 다중 사진 매칭 및 SEO 분석 탭 분리")
+st.markdown("Gemini 3.6 Flash 기반 / 멀티 에이전트 / 목적별 글쓰기 모드 및 SEO 분석 탭 분리")
 
 # API 키 설정 (사이드바)
 with st.sidebar:
@@ -72,7 +72,7 @@ def search_naver_blog_real(query: str, client_id: str, client_secret: str):
 # -------------------------------------------------------------
 tab_main, tab_style, tab_seo = st.tabs([
     "📝 본문 생성 (Main)", 
-    "🧠 데이터 및 스타일 학습", 
+    "🧠 데이터 및 레퍼런스 학습", 
     "📊 SEO 분석 및 리포트"
 ])
 
@@ -80,42 +80,38 @@ with tab_main:
     st.subheader("1. 기본 정보 입력")
     col1, col2 = st.columns(2)
     with col1:
-        company_name = st.text_input("업체명 (상호명)", placeholder="예: 스타벅스 역삼점")
+        company_name = st.text_input("업체명 (상호명)", placeholder="예: 스타벅스 역삼점 또는 스마트코딩학원")
     with col2:
         region = st.text_input("지역 / 위치", placeholder="예: 서울 강남구 역삼동")
 
     st.markdown("---")
-    st.subheader("2. 핵심 요청사항 (Custom Prompt)")
+    st.subheader("2. 콘텐츠 목적 및 관점 선택")
+    writing_mode = st.radio(
+        "작성할 글의 성격과 시점을 선택하세요",
+        [
+            "📝 후기형 (수강생 / 고객 입장에서 직접 체험하고 쓰는 리얼 후기)", 
+            "📚 정보성 (학원 / 업체 입장에서 전문 지식을 전달하는 가이드 글)", 
+            "🎬 쇼츠 스크립트 (학원 / 업체 입장에서 1분 이내로 눈길을 사로잡는 숏폼 영상 대본)"
+        ],
+        index=0
+    )
+
+    st.markdown("---")
+    st.subheader("3. 핵심 요청사항 (Custom Prompt)")
     custom_prompt = st.text_area(
         "이번 글만의 특별한 이벤트, 강조 포인트, 주의사항을 적어주세요",
         placeholder="예: 이번 주말에만 선착순 3명에게 무료 레슨 진행한다는 점을 강조해 줘.",
         height=130
     )
 
-    st.markdown("---")
-    st.subheader("3. 사진 파일 다중 업로드 및 매칭")
-    uploaded_files = st.file_uploader(
-        "사진 파일 다중 선택 (여러 장 업로드 가능)", 
-        type=["png", "jpg", "jpeg", "webp"], 
-        accept_multiple_files=True
-    )
-    
-    uploaded_file_names = []
-    if uploaded_files:
-        uploaded_file_names = [file.name for file in uploaded_files]
-        with st.expander("업로드된 사진 파일명 확인하기"):
-            for name in uploaded_file_names:
-                st.write(f"- 📁 {name}")
-
 with tab_style:
-    st.subheader("🎨 스타일 및 레퍼런스 학습 공간")
-    col_s1, col_s2 = st.columns(2)
-    with col_s1:
-        st.markdown("#### 👤 본인 블로그 글 샘플 (말투 복사)")
-        my_tone_sample = st.text_area("평소 본인이 쓰는 말투나 과거 블로그 글 본문을 붙여넣으세요.", height=280)
-    with col_s2:
-        st.markdown("#### 🏆 경쟁사 블로그 샘플 (상위 노출 분석용)")
-        competitor_sample = st.text_area("현재 상위 노출되고 있는 경쟁사 블로그 본문이나 특징을 붙여넣으세요.", height=280)
+    st.subheader("🎨 레퍼런스 및 경쟁사 분석 공간")
+    st.markdown("#### 🏆 경쟁사 블로그 샘플 (상위 노출 분석용)")
+    competitor_sample = st.text_area(
+        "현재 상위 노출되고 있는 경쟁사 블로그 본문이나 벤치마킹하고 싶은 문장 구조를 붙여넣으세요.", 
+        height=320,
+        placeholder="경쟁사 글의 핵심 키워드 배치나 서두 구조를 입력하면 에이전트가 완벽히 분석하여 반영합니다."
+    )
 
 with tab_seo:
     st.subheader("📊 SEO 분석 및 에이전트 리포트")
@@ -126,10 +122,10 @@ with tab_seo:
         st.info("💡 아직 생성된 리포트가 없습니다. '본문 생성' 탭에서 글을 생성해주세요!")
 
 # -------------------------------------------------------------
-# 3. 멀티 에이전트 실행 파이프라인 (본문/SEO 분리 생성으로 안정성 강화)
+# 3. 멀티 에이전트 실행 파이프라인 (Gemini 3.6 Flash 활용)
 # -------------------------------------------------------------
 st.markdown("---")
-generate_btn = st.button("✨ 멀티 에이전트 가동 및 블로그 글 생성하기", type="primary", use_container_width=True)
+generate_btn = st.button("✨ 멀티 에이전트 가동 및 콘텐츠 생성하기", type="primary", use_container_width=True)
 
 if generate_btn:
     if not api_key_input:
@@ -146,40 +142,44 @@ if generate_btn:
             progress_text.text("🔍 [1단계] 리서치 및 상위 노출 트렌드 분석 중...")
             naver_research = search_naver_blog_real(f"{region} {company_name}", naver_client_id, naver_client_secret)
             
-            photo_context = "업로드된 사진 없음"
-            if uploaded_file_names:
-                photo_context = "사용자가 업로드한 실제 사진 파일명 리스트:\n" + "\n".join([f"- {name}" for name in uploaded_file_names])
-            
+            # 선택된 모드에 따른 페르소나 지시사항 분기
+            if "후기형" in writing_mode:
+                mode_instruction = "[작성 모드: 후기형 (수강생/고객 입장)] - 실제 방문하거나 수강한 고객의 시점에서 솔직하고 친근하며 신뢰감 가는 어투로 작성."
+            elif "정보성" in writing_mode:
+                mode_instruction = "[작성 모드: 정보성 (학원/업체 입장)] - 해당 분야의 전문가 입장에서 깊이 있는 정보와 노하우를 체계적이고 신뢰도 있게 전달하는 구조로 작성."
+            else:
+                mode_instruction = "[작성 모드: 쇼츠 스크립트 (학원/업체 입장)] - 1분 안에 시청자의 이목을 사로잡을 수 있도록 [화면 연출]과 [나레이션 대사]가 구분된 역동적인 숏폼 대본 형식으로 작성."
+
             # 공통 배경 데이터 묶음
             base_context = f"""
             [기본 정보] - 업체명: {company_name} / 지역: {region}
-            [핵심 요청사항] {custom_prompt if custom_prompt else "일반적인 정보성 후기"}
-            [사진 매칭 데이터] {photo_context}
-            [말투 및 레퍼런스] 본인 말투: {my_tone_sample or "친근한 어투"} / 경쟁사: {competitor_sample or "일반 구조"}
+            {mode_instruction}
+            [핵심 요청사항] {custom_prompt if custom_prompt else "일반적인 정보성 내용"}
+            [경쟁사 레퍼런스 참고] {competitor_sample or "일반 상위 노출 구조"}
             [리서치 데이터] {naver_research}
             """
 
-            # [단계 2] 블로그 본문 생성
-            progress_text.text("✍️ [2단계] 라이터 에이전트가 최적화 블로그 본문을 작성 중입니다...")
-            body_prompt = f"{base_context}\n\n위 데이터를 바탕으로 네이버 상위 노출에 최적화된 리얼 후기 블로그 본문만 작성해 줘. 사진이 들어갈 자리에 [사진: 파일명] 가이드를 포함해 줘."
+            # [단계 2] 콘텐츠 본문 생성
+            progress_text.text("✍️ [2단계] 라이터 에이전트가 최적화 콘텐츠를 작성 중입니다...")
+            body_prompt = f"{base_context}\n\n위 데이터를 바탕으로 네이버 상위 노출에 최적화된 고품질 결과물을 작성해 줘."
             body_response = client.models.generate_content(model=model_name, contents=body_prompt)
             st.session_state["generated_content"] = body_response.text
 
-            # [단계 3] SEO 분석 리포트 별도 생성 (파싱 오류 원천 차단)
+            # [단계 3] SEO 분석 리포트 별도 생성
             progress_text.text("📊 [3단계] SEO 분석 에이전트가 상위 노출 점수와 피드백을 채점 중입니다...")
-            seo_prompt = f"다음은 방금 작성된 블로그 본문입니다:\n\n{body_response.text}\n\n이 글을 바탕으로 네이버 SEO 상위 노출 관점에서 100점 만점 점수, 키워드 배치 상태, 그리고 개선 피드백을 마크다운 리포트로 상세히 작성해 줘."
+            seo_prompt = f"다음은 방금 작성된 콘텐츠입니다:\n\n{body_response.text}\n\n이 글을 바탕으로 네이버 SEO 상위 노출 관점에서 100점 만점 점수, 키워드 배치 상태, 그리고 개선 피드백을 마크다운 리포트로 상세히 작성해 줘."
             seo_response = client.models.generate_content(model=model_name, contents=seo_prompt)
             st.session_state["seo_report"] = seo_response.text
             
             progress_text.empty()
-            st.success("🎉 블로그 본문 생성 및 SEO 분석 리포트 작성이 완료되었습니다! [SEO 분석 및 리포트] 탭을 확인해보세요.")
+            st.success("🎉 콘텐츠 생성 및 SEO 분석 리포트 작성이 완료되었습니다! [SEO 분석 및 리포트] 탭을 확인해보세요.")
             
         except Exception as e:
             progress_text.empty()
             st.error(f"오류가 발생했습니다: {e}")
 
-# 본문 탭 하단에 최종 생성된 본문 표시
+# 본문 탭 하단에 최종 생성된 콘텐츠 표시
 if st.session_state["generated_content"]:
     st.markdown("---")
-    st.subheader("📄 최종 생성된 블로그 본문")
-    st.text_area("블로그에 복사해서 붙여넣으세요", value=st.session_state["generated_content"], height=450)
+    st.subheader("📄 최종 생성된 콘텐츠 결과물")
+    st.text_area("결과물을 복사해서 사용하세요", value=st.session_state["generated_content"], height=480)
